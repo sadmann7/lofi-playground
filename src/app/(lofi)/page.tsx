@@ -1,4 +1,4 @@
-import { DialogWrapper } from "@/components/dialog-wrapper"
+import { LofiDialog } from "@/components/lofi-dialog"
 
 export default function IndexPage() {
   return (
@@ -13,7 +13,7 @@ export default function IndexPage() {
           into your apps. Free. Open Source. And Next.js 13 Ready.
         </p>
       </div> */}
-      <DialogWrapper />
+      <LofiDialog />
     </section>
   )
 }

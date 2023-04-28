@@ -1,3 +1,7 @@
+"use client"
+
+import * as React from "react"
+
 import { Ambient } from "@/components/ambient"
 import { LofiTabs } from "@/components/lofi-tabs"
 import { Pomodoro } from "@/components/pomodoro"
@@ -25,16 +29,13 @@ const tabs = [
   },
 ]
 
-interface LofiDialogProps {
-  defaultTab: string
-  setDefaultTab: React.Dispatch<React.SetStateAction<string>>
-}
+export function LofiDialog() {
+  const [defaultTab, setDefaultTab] = React.useState("")
 
-export function LofiDialog({ defaultTab, setDefaultTab }: LofiDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <div className="space-x-2.5">
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
           {tabs.map((tab, i) => (
             <Button
               key={i}
