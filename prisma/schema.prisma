@@ -65,7 +65,7 @@ model VerificationToken {
 
 model Todo {
     id        String   @id @default(cuid())
-    label     String
+    name      String
     completed Boolean  @default(false)
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId    String
