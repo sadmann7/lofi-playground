@@ -30,7 +30,7 @@ const server = z.object({
 const client = z.object(
   /** @satisfies {Record<`NEXT_PUBLIC_${string}`, import('zod').ZodType>} */ (
     {
-      // NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
+      NEXT_PUBLIC_APP_URL: z.string().url(),
     }
   )
 );
@@ -48,6 +48,7 @@ const processEnv = {
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 };
 
 // Don't touch the part below

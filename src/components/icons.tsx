@@ -2,6 +2,7 @@ import {
   Moon,
   SunMedium,
   Twitter,
+  X,
   type Icon as LucideIcon,
   type LucideProps,
 } from "lucide-react"
@@ -9,6 +10,7 @@ import {
 export type Icon = LucideIcon
 
 export const Icons = {
+  close: X,
   sun: SunMedium,
   moon: Moon,
   twitter: Twitter,

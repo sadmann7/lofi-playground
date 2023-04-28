@@ -6,8 +6,8 @@ export const siteConfig = {
     "A collection of lofi music, and images to help you focus and relax.",
   mainNav: [
     {
-      title: "Home",
-      href: "/",
+      title: "Your Playgrounds",
+      href: "/your-playgrounds",
     },
   ],
   links: {
