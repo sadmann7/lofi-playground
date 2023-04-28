@@ -2,11 +2,14 @@
  * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
  * for Docker builds.
  */
-await import("./src/env.mjs");
+await import("./src/env.mjs")
 
 /** @type {import("next").NextConfig} */
 const config = {
   reactStrictMode: true,
+  images: {
+    domains: ["lh3.googleusercontent.com"],
+  },
   experimental: {
     appDir: true,
     serverComponentsExternalPackages: ["@prisma/client"],
@@ -21,5 +24,5 @@ const config = {
   //   locales: ["en"],
   //   defaultLocale: "en",
   // },
-};
-export default config;
+}
+export default config

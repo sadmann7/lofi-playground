@@ -8,10 +8,11 @@ export const siteConfig = {
   ogImage: "https://lofi-playground.vercel.app/og.png",
   mainNav: [
     {
-      title: "Your Playgrounds",
-      href: "/your-playgrounds",
+      title: "Playgrounds",
+      href: "/playgrounds",
     },
   ],
+
   links: {
     twitter: "https://twitter.com/sadmann17",
     github: "https://github.com/sadmann7/lofi-playground",
