@@ -4,6 +4,7 @@ interface LofiTabsProps {
   defaultTab?: string
   tabs: {
     title: string
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
     content: React.ReactNode
   }[]
 }
@@ -18,12 +19,15 @@ export function LofiTabs({ defaultTab, tabs }: LofiTabsProps) {
             value={tab.title}
             className="rounded-none border-b-2 py-2 data-[state=active]:border-b-foreground data-[state=active]:bg-transparent"
           >
+            {tab.icon && (
+              <tab.icon className="mr-2 h-4 w-4" aria-hidden="true" />
+            )}
             {tab.title}
           </TabsTrigger>
         ))}
       </TabsList>
       {tabs.map((tab, i) => (
-        <TabsContent key={i} className="mt-3" value={tab.title}>
+        <TabsContent key={i} value={tab.title} className="mt-3">
           {tab.content}
         </TabsContent>
       ))}

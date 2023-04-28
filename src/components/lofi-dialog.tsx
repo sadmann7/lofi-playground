@@ -3,6 +3,7 @@
 import * as React from "react"
 
 import { Ambient } from "@/components/ambient"
+import { Icons } from "@/components/icons"
 import { LofiTabs } from "@/components/lofi-tabs"
 import { Pomodoro } from "@/components/pomodoro"
 import { TodoList } from "@/components/todo-list"
@@ -18,13 +19,15 @@ import {
 } from "@/components/ui/dialog"
 
 const tabs = [
-  { title: "Todo", content: <TodoList /> },
+  { title: "Todo", icon: Icons.check, content: <TodoList /> },
   {
     title: "Pomodoro",
+    icon: Icons.alarm,
     content: <Pomodoro />,
   },
   {
     title: "Ambient",
+    icon: Icons.slider,
     content: <Ambient />,
   },
 ]
@@ -42,6 +45,9 @@ export function LofiDialog() {
               variant="outline"
               onClick={() => setDefaultTab(tab.title)}
             >
+              {tab.icon && (
+                <tab.icon className="mr-2 h-4 w-4" aria-hidden="true" />
+              )}
               {tab.title}
               <span className="sr-only">{tab.title}</span>
             </Button>
@@ -50,7 +56,7 @@ export function LofiDialog() {
       </DialogTrigger>
       <DialogContent>
         <LofiTabs defaultTab={defaultTab} tabs={tabs} />
-        <DialogHeader>
+        {/* <DialogHeader>
           <DialogTitle>Edit profile</DialogTitle>
           <DialogDescription>
             Make changes to your profile here. Click save when {`you're`} done.
@@ -58,7 +64,7 @@ export function LofiDialog() {
         </DialogHeader>
         <DialogFooter>
           <Button type="submit">Save changes</Button>
-        </DialogFooter>
+        </DialogFooter> */}
       </DialogContent>
     </Dialog>
   )
