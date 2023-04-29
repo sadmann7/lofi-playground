@@ -4,8 +4,6 @@ import type { PropsWithChildren } from "react"
 
 import { api } from "@/lib/api-beta"
 
-const TRPCProvider = ({ children }: PropsWithChildren) => {
+export function TRPCProvider({ children }: PropsWithChildren) {
   return <api.Provider>{children}</api.Provider>
 }
-
-export default TRPCProvider

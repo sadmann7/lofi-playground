@@ -1,5 +1,3 @@
-"use client"
-
 import { Toaster as ReactToaster } from "react-hot-toast"
 
 export function Toaster() {
