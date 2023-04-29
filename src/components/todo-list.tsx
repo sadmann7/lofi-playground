@@ -1,5 +1,4 @@
 import * as React from "react"
-import { Fragment, useEffect, useState } from "react"
 import type { Todo } from "@prisma/client"
 import { useIsMutating } from "@tanstack/react-query"
 import { useForm, type SubmitHandler } from "react-hook-form"
@@ -11,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const schema = z.object({
   name: z.string().min(1, {
@@ -59,78 +59,99 @@ export function TodoList() {
 
   // refetch todos
   const number = useIsMutating()
-  useEffect(() => {
+  React.useEffect(() => {
     if (number === 0) {
       void apiUtils.todo.getAll.invalidate()
     }
   }, [number, apiUtils])
 
   // react-hook-form
-  const [showInput, setShowInput] = useState(false)
+  const [showInput, setShowInput] = React.useState(false)
+
   const { register, setFocus, handleSubmit, reset } = useForm<Inputs>()
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     await addTodoMutation.mutateAsync(data.name)
-    setShowInput(false)
+    setShowInput(true)
     reset()
   }
+
   // setFocus on showInput change
   React.useEffect(() => {
     setFocus("name")
   }, [setFocus, showInput])
 
+  // scroll to bottom on todos on todosQuery change
+  const scrollRef = React.useRef<HTMLUListElement>(null)
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [todosQuery.data])
+
   return (
     <div className="space-y-2.5">
-      <ul className="mt-5 grid gap-5">
-        {todosQuery.isSuccess &&
-          todosQuery.data.map((todo) => <TodoCard todo={todo} key={todo.id} />)}
+      <ul
+        ref={scrollRef}
+        className="grid max-h-[480px] gap-2.5 overflow-y-auto overflow-x-hidden px-6"
+      >
+        {todosQuery.isLoading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-6 w-full" />
+            ))
+          : todosQuery.isSuccess &&
+            todosQuery.data.map((todo) => (
+              <TodoCard todo={todo} key={todo.id} />
+            ))}
       </ul>
-      <form onSubmit={(...args) => void handleSubmit(onSubmit)(...args)}>
+      <form
+        className="px-6"
+        onSubmit={(...args) => void handleSubmit(onSubmit)(...args)}
+      >
         {showInput ? (
-          <Fragment>
+          <div className="flex flex-col space-y-3">
             <Input
-              id="todo"
+              id="todoName"
               type="text"
               placeholder="Type todo..."
               {...register("name", { required: true })}
             />
-            <div className="mt-3 flex">
-              <div className="ml-auto flex items-center space-x-3">
-                <Button
-                  type="button"
-                  aria-label="Cancel"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowInput(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  aria-label="Add todo"
-                  size="sm"
-                  disabled={addTodoMutation.isLoading}
-                >
-                  {addTodoMutation.isLoading && (
-                    <Icons.spinner
-                      className="mr-2 h-4 w-4 animate-spin"
-                      aria-hidden="true"
-                    />
-                  )}
-                  Add Todo
-                </Button>
-              </div>
+
+            <div className="ml-auto flex items-center space-x-2.5">
+              <Button
+                type="button"
+                aria-label="Cancel"
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowInput(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                aria-label="Add todo"
+                size="sm"
+                disabled={addTodoMutation.isLoading}
+              >
+                {addTodoMutation.isLoading && (
+                  <Icons.spinner
+                    className="mr-2 h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                )}
+                Add Todo
+              </Button>
             </div>
-          </Fragment>
+          </div>
         ) : (
           <div className="flex items-center justify-between gap-5">
             <Button
               aria-label="Open add todo input"
               type="button"
               variant="ghost"
-              className="p-0 hover:bg-transparent"
+              className="p-0 hover:bg-transparent hover:opacity-80"
               onClick={() => setShowInput(true)}
             >
               <Icons.add
-                className="mr-2 h-5 w-5 text-red-400"
+                className="mr-2 h-5 w-5 text-red-500"
                 aria-hidden="true"
               />
               <p className="text-slate-400">Add todo</p>
@@ -157,7 +178,7 @@ const TodoCard = ({ todo }: { todo: Todo }) => {
   const apiUtils = api.useContext()
   const [isHoverd, setIsHoverd] = React.useState(false)
   const [isEditing, setIsEditing] = React.useState(false)
-  const [todoName, setTodoName] = React.useState(todo.name)
+  const [todoName, setTodoName] = React.useState(todo.name ?? "")
 
   // update todo mutation
   const updateTodoMutation = api.todo.update.useMutation({
@@ -192,7 +213,7 @@ const TodoCard = ({ todo }: { todo: Todo }) => {
   return (
     <li
       className={cn(
-        "flex h-5 cursor-pointer",
+        "flex min-h-[40px] cursor-pointer",
         isEditing ? "flex-col" : "flex-row items-center justify-between gap-2"
       )}
       onMouseEnter={() => setIsHoverd(true)}
@@ -200,16 +221,14 @@ const TodoCard = ({ todo }: { todo: Todo }) => {
       onDoubleClick={() => setIsEditing(!isEditing)}
     >
       {isEditing ? (
-        <Fragment>
+        <div className="z-10 flex flex-col space-y-3">
           <Input
-            id="editableTodo"
+            id="editableTodoName"
             type="text"
-            className="w-full rounded-md bg-black/50 px-4"
-            onChange={(e) => {
-              setTodoName(e.target.value)
-            }}
+            value={todoName}
+            onChange={(e) => setTodoName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && todoName.length > 0) {
+              if (e.key === "Enter" && todoName?.length > 0) {
                 updateTodoMutation.mutate({
                   id: todo.id,
                   completed: todo.completed,
@@ -221,40 +240,39 @@ const TodoCard = ({ todo }: { todo: Todo }) => {
             defaultValue={todoName}
             autoFocus={isEditing}
           />
-          <div className="mt-3 flex">
-            <div className="ml-auto flex items-center space-x-3">
-              <Button
-                aria-label="Cancel"
-                type="button"
-                variant="destructive"
-                onClick={() => setIsEditing(!isEditing)}
-                disabled={updateTodoMutation.isLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                aria-label="Save todo"
-                size="sm"
-                onClick={() => {
-                  updateTodoMutation.mutate({
-                    id: todo.id,
-                    name: todo.name,
-                  })
-                  setIsEditing(false)
-                }}
-                disabled={todoName.length <= 0 || updateTodoMutation.isLoading}
-              >
-                {updateTodoMutation.isLoading && (
-                  <Icons.spinner
-                    className="mr-2 h-4 w-4 animate-spin"
-                    aria-hidden="true"
-                  />
-                )}
-                Save
-              </Button>
-            </div>
+          <div className="ml-auto flex items-center space-x-2.5">
+            <Button
+              aria-label="Cancel"
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => setIsEditing(!isEditing)}
+              disabled={updateTodoMutation.isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              aria-label="Save todo"
+              size="sm"
+              onClick={() => {
+                updateTodoMutation.mutate({
+                  id: todo.id,
+                  name: todo.name,
+                })
+                setIsEditing(false)
+              }}
+              disabled={todoName.length <= 0 || updateTodoMutation.isLoading}
+            >
+              {updateTodoMutation.isLoading && (
+                <Icons.spinner
+                  className="mr-2 h-4 w-4 animate-spin"
+                  aria-hidden="true"
+                />
+              )}
+              Save
+            </Button>
           </div>
-        </Fragment>
+        </div>
       ) : (
         <div className="flex items-center space-x-2">
           <Input
@@ -269,11 +287,10 @@ const TodoCard = ({ todo }: { todo: Todo }) => {
                 completed: e.currentTarget.checked,
               })
             }}
-            autoFocus={isEditing}
           />
           <p
             className={cn(
-              "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+              "line-clamp-1 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
               todo.completed && "text-slate-400 line-through"
             )}
           >

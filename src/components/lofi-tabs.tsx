@@ -12,7 +12,7 @@ interface LofiTabsProps {
 export function LofiTabs({ defaultTab, tabs }: LofiTabsProps) {
   return (
     <Tabs defaultValue={defaultTab ?? tabs[0]?.title}>
-      <TabsList className="grid w-full grid-cols-3 rounded-none bg-transparent">
+      <TabsList className="grid w-full grid-cols-3 rounded-none bg-transparent px-6 pt-6">
         {tabs.map((tab, i) => (
           <TabsTrigger
             key={i}
@@ -27,7 +27,7 @@ export function LofiTabs({ defaultTab, tabs }: LofiTabsProps) {
         ))}
       </TabsList>
       {tabs.map((tab, i) => (
-        <TabsContent key={i} value={tab.title} className="mt-3">
+        <TabsContent key={i} value={tab.title} className="py-6">
           {tab.content}
         </TabsContent>
       ))}
