@@ -25,7 +25,7 @@ export function Pomodoro() {
   }
 
   return (
-    <Tabs defaultValue="pomodoro">
+    <Tabs defaultValue="pomodoro" className="px-6">
       <TabsList className="grid w-full grid-cols-3 bg-transparent">
         <TabsTrigger
           value="pomodoro"

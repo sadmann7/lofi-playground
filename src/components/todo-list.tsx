@@ -9,18 +9,19 @@ import { api } from "@/lib/api-beta"
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const schema = z.object({
-  name: z.string().min(1, {
-    message: "Name is required",
-  }),
+  name: z.string().min(1),
 })
 type Inputs = z.infer<typeof schema>
 
 export function TodoList() {
   const apiUtils = api.useContext()
+
   // todos query
   const todosQuery = api.todo.getAll.useQuery(undefined, {
     staleTime: 3000,
@@ -80,29 +81,33 @@ export function TodoList() {
     setFocus("name")
   }, [setFocus, showInput])
 
-  // scroll to bottom on todos on todosQuery change
-  const scrollRef = React.useRef<HTMLUListElement>(null)
+  // scroll to bottom of todos on todosQuery data change
+  const todosRef = React.useRef<HTMLUListElement>(null)
   React.useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
+    if (!todosRef.current) return
+    todosRef.current.scrollTop = todosRef.current.scrollHeight
   }, [todosQuery.data])
 
   return (
-    <div className="space-y-2.5">
-      <ul
-        ref={scrollRef}
-        className="grid max-h-[480px] gap-2.5 overflow-y-auto overflow-x-hidden px-6"
-      >
-        {todosQuery.isLoading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-6 w-full" />
-            ))
-          : todosQuery.isSuccess &&
-            todosQuery.data.map((todo) => (
+    <div className="space-y-3">
+      {todosQuery.isLoading ? (
+        <div className="mt-2.5 grid gap-5 px-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-6 w-full" />
+          ))}
+        </div>
+      ) : (
+        todosQuery.data?.length > 0 && (
+          <ul
+            ref={todosRef}
+            className="grid max-h-[480px] gap-4 overflow-y-auto overflow-x-hidden px-6 pt-1"
+          >
+            {todosQuery.data.map((todo) => (
               <TodoCard todo={todo} key={todo.id} />
             ))}
-      </ul>
+          </ul>
+        )
+      )}
       <form
         className="px-6"
         onSubmit={(...args) => void handleSubmit(onSubmit)(...args)}
@@ -116,7 +121,7 @@ export function TodoList() {
               {...register("name", { required: true })}
             />
 
-            <div className="ml-auto flex items-center space-x-2.5">
+            <div className="ml-auto flex items-center gap-2.5">
               <Button
                 type="button"
                 aria-label="Cancel"
@@ -161,7 +166,7 @@ export function TodoList() {
                 <div
                   role="button"
                   aria-label="delete completed todos"
-                  className="flex cursor-pointer items-center space-x-2 text-xs text-gray-400 transition-opacity hover:opacity-80 active:opacity-100 md:text-sm"
+                  className="flex cursor-pointer items-center gap-2 text-xs text-gray-400 transition-opacity hover:opacity-80 active:opacity-100 md:text-sm"
                   onClick={() => void deleteTodosMutation.mutate()}
                 >
                   Delete completed
@@ -176,6 +181,7 @@ export function TodoList() {
 
 const TodoCard = ({ todo }: { todo: Todo }) => {
   const apiUtils = api.useContext()
+
   const [isHoverd, setIsHoverd] = React.useState(false)
   const [isEditing, setIsEditing] = React.useState(false)
   const [todoName, setTodoName] = React.useState(todo.name ?? "")
@@ -211,115 +217,117 @@ const TodoCard = ({ todo }: { todo: Todo }) => {
   })
 
   return (
-    <li
-      className={cn(
-        "flex min-h-[40px] cursor-pointer",
-        isEditing ? "flex-col" : "flex-row items-center justify-between gap-2"
-      )}
-      onMouseEnter={() => setIsHoverd(true)}
-      onMouseLeave={() => setIsHoverd(false)}
-      onDoubleClick={() => setIsEditing(!isEditing)}
-    >
-      {isEditing ? (
-        <div className="z-10 flex flex-col space-y-3">
-          <Input
-            id="editableTodoName"
-            type="text"
-            value={todoName}
-            onChange={(e) => setTodoName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && todoName?.length > 0) {
+    <li className={cn(isEditing && "space-y-3")}>
+      <div
+        className={cn(
+          "flex min-h-[40px] cursor-pointer",
+          isEditing ? "flex-col" : "flex-row items-center justify-between gap-2"
+        )}
+        onMouseEnter={() => setIsHoverd(true)}
+        onMouseLeave={() => setIsHoverd(false)}
+        onDoubleClick={() => setIsEditing(!isEditing)}
+      >
+        {isEditing ? (
+          <div className="z-10 flex flex-col gap-3">
+            <Input
+              id="editableTodoName"
+              type="text"
+              value={todoName}
+              onChange={(e) => setTodoName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && todoName?.length > 0) {
+                  updateTodoMutation.mutate({
+                    id: todo.id,
+                    completed: todo.completed,
+                    name: todo.name,
+                  })
+                  setIsEditing(false)
+                }
+              }}
+              autoFocus={isEditing}
+            />
+            <div className="ml-auto flex items-center gap-2.5">
+              <Button
+                aria-label="Cancel"
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => setIsEditing(!isEditing)}
+                disabled={updateTodoMutation.isLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                aria-label="Save todo"
+                size="sm"
+                onClick={() => {
+                  updateTodoMutation.mutate({
+                    id: todo.id,
+                    name: todo.name,
+                  })
+                  setIsEditing(false)
+                }}
+                disabled={todoName.length <= 0 || updateTodoMutation.isLoading}
+              >
+                {updateTodoMutation.isLoading && (
+                  <Icons.spinner
+                    className="mr-2 h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                )}
+                Save
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="todoStatus"
+              checked={todo.completed}
+              onCheckedChange={(checked) => {
+                if (typeof checked !== "boolean") return
                 updateTodoMutation.mutate({
                   id: todo.id,
-                  completed: todo.completed,
-                  name: todo.name,
+                  completed: checked,
                 })
-                setIsEditing(false)
-              }
-            }}
-            defaultValue={todoName}
-            autoFocus={isEditing}
-          />
-          <div className="ml-auto flex items-center space-x-2.5">
-            <Button
-              aria-label="Cancel"
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={() => setIsEditing(!isEditing)}
-              disabled={updateTodoMutation.isLoading}
+              }}
+            />
+            <p
+              className={cn(
+                "line-clamp-1 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+                todo.completed && "text-slate-400 line-through"
+              )}
             >
-              Cancel
+              {todoName}
+            </p>
+          </div>
+        )}
+        {isHoverd && !isEditing && (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              title="Edit todo"
+              variant="ghost"
+              className="p-0 hover:bg-transparent"
+              onClick={() => setIsEditing(true)}
+            >
+              <Icons.edit className="h-4 w-4" aria-hidden="true" />
+              <span className="sr-only">Edit todo</span>
             </Button>
             <Button
-              aria-label="Save todo"
-              size="sm"
-              onClick={() => {
-                updateTodoMutation.mutate({
-                  id: todo.id,
-                  name: todo.name,
-                })
-                setIsEditing(false)
-              }}
-              disabled={todoName.length <= 0 || updateTodoMutation.isLoading}
+              type="button"
+              title="Delete todo"
+              variant="ghost"
+              className="p-0 hover:bg-transparent"
+              onClick={() => deleteTodoMutation.mutate(todo.id)}
             >
-              {updateTodoMutation.isLoading && (
-                <Icons.spinner
-                  className="mr-2 h-4 w-4 animate-spin"
-                  aria-hidden="true"
-                />
-              )}
-              Save
+              <Icons.trash className="h-4 w-4" aria-hidden="true" />
+              <span className="sr-only">Delete todo</span>
             </Button>
           </div>
-        </div>
-      ) : (
-        <div className="flex items-center space-x-2">
-          <Input
-            aria-label="Check todo"
-            id="progress"
-            type="checkbox"
-            className="h-4 w-4 rounded p-0"
-            checked={todo.completed}
-            onChange={(e) => {
-              updateTodoMutation.mutate({
-                id: todo.id,
-                completed: e.currentTarget.checked,
-              })
-            }}
-          />
-          <p
-            className={cn(
-              "line-clamp-1 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-              todo.completed && "text-slate-400 line-through"
-            )}
-          >
-            {todoName}
-          </p>
-        </div>
-      )}
-      {isHoverd && !isEditing && (
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            className="p-0 hover:bg-transparent"
-            onClick={() => setIsEditing(true)}
-          >
-            <Icons.edit className="h-4 w-4" aria-hidden="true" />
-            <span className="sr-only">Edit todo</span>
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="p-0 hover:bg-transparent"
-            onClick={() => deleteTodoMutation.mutate(todo.id)}
-          >
-            <Icons.trash className="h-4 w-4" aria-hidden="true" />
-            <span className="sr-only">Delete todo</span>
-          </Button>
-        </div>
-      )}
+        )}
+      </div>
+      <Separator className="w-full" />
     </li>
   )
 }

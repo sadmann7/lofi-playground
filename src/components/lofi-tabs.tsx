@@ -27,7 +27,7 @@ export function LofiTabs({ defaultTab, tabs }: LofiTabsProps) {
         ))}
       </TabsList>
       {tabs.map((tab, i) => (
-        <TabsContent key={i} value={tab.title} className="py-6">
+        <TabsContent key={i} value={tab.title} className="pb-6 pt-8">
           {tab.content}
         </TabsContent>
       ))}
