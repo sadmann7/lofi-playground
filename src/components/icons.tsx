@@ -22,6 +22,7 @@ import {
   Trash,
   TreePine,
   Twitter,
+  Umbrella,
   User,
   Volume2,
   VolumeX,
@@ -29,7 +30,7 @@ import {
   Wind,
   X,
   type Icon as LucideIcon,
-  type LucideProps
+  type LucideProps,
 } from "lucide-react"
 
 export type Icon = LucideIcon
@@ -57,6 +58,7 @@ export const Icons = {
   volumne: Volume2,
   volumneMute: VolumeX,
   rain: CloudRain,
+  umbrella: Umbrella,
   wind: Wind,
   snow: Snowflake,
   fire: Flame,
