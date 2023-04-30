@@ -29,29 +29,19 @@ export function TodoList() {
 
   // add todo mutation
   const addTodoMutation = api.todo.create.useMutation({
-    onMutate: async () => {
+    onMutate: async (name) => {
       await apiUtils.todo.getAll.cancel()
+      const todos = todosQuery.data ?? []
+      apiUtils.todo.getAll.setData(undefined, [
+        ...todos,
+        {
+          id: crypto.randomUUID(),
+          name,
+          completed: false,
+        },
+      ])
 
-      apiUtils.todo.getAll.setData(undefined, (oldTodos) => {
-        if (!oldTodos) return
-        return [...oldTodos]
-      })
       toast.success("Todo added.")
-    },
-    onError: (error) => {
-      toast.error(error.message)
-    },
-  })
-
-  // delete todos mutation
-  const deleteTodosMutation = api.todo.deleteMany.useMutation({
-    onMutate: async () => {
-      await apiUtils.todo.getAll.cancel()
-      const allTodos = apiUtils.todo.getAll.getData()
-      if (!allTodos) return
-      const newTodos = allTodos.filter((todo) => !todo.completed)
-      apiUtils.todo.getAll.setData(undefined, newTodos)
-      toast.success("Todos deleted.")
     },
     onError: (error) => {
       toast.error(error.message)
@@ -71,9 +61,9 @@ export function TodoList() {
 
   const { register, setFocus, handleSubmit, reset } = useForm<Inputs>()
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    await addTodoMutation.mutateAsync(data.name)
-    setShowInput(true)
     reset()
+    setShowInput(true)
+    await addTodoMutation.mutateAsync(data.name)
   }
 
   // setFocus on showInput change
@@ -97,6 +87,7 @@ export function TodoList() {
           ))}
         </div>
       ) : (
+        todosQuery.isSuccess &&
         todosQuery.data?.length > 0 && (
           <ul
             ref={todosRef}
@@ -131,55 +122,36 @@ export function TodoList() {
               >
                 Cancel
               </Button>
-              <Button
-                aria-label="Add todo"
-                size="sm"
-                disabled={addTodoMutation.isLoading}
-              >
-                {addTodoMutation.isLoading && (
-                  <Icons.spinner
-                    className="mr-2 h-4 w-4 animate-spin"
-                    aria-hidden="true"
-                  />
-                )}
+              <Button aria-label="Add todo" size="sm">
                 Add Todo
               </Button>
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-5">
-            <Button
-              aria-label="Open add todo input"
-              type="button"
-              variant="ghost"
-              className="p-0 hover:bg-transparent hover:opacity-80"
-              onClick={() => setShowInput(true)}
-            >
-              <Icons.add
-                className="mr-2 h-5 w-5 text-red-500"
-                aria-hidden="true"
-              />
-              <p className="text-slate-400">Add todo</p>
-            </Button>
-            {todosQuery.isSuccess &&
-              todosQuery.data.some((todo) => todo.completed) && (
-                <div
-                  role="button"
-                  aria-label="delete completed todos"
-                  className="flex cursor-pointer items-center gap-2 text-xs text-gray-400 transition-opacity hover:opacity-80 active:opacity-100 md:text-sm"
-                  onClick={() => void deleteTodosMutation.mutate()}
-                >
-                  Delete completed
-                </div>
-              )}
-          </div>
+          <Button
+            aria-label="Open add todo input"
+            type="button"
+            variant="ghost"
+            className="p-0 hover:bg-transparent hover:opacity-80"
+            onClick={() => setShowInput(true)}
+          >
+            <Icons.add
+              className="mr-2 h-5 w-5 text-red-500"
+              aria-hidden="true"
+            />
+            <p className="text-slate-400">Add todo</p>
+          </Button>
         )}
       </form>
     </div>
   )
 }
 
-const TodoCard = ({ todo }: { todo: Todo }) => {
+interface TodoCardProps {
+  todo: Pick<Todo, "id" | "name" | "completed">
+}
+
+const TodoCard = ({ todo }: TodoCardProps) => {
   const apiUtils = api.useContext()
 
   const [isHoverd, setIsHoverd] = React.useState(false)
@@ -191,11 +163,20 @@ const TodoCard = ({ todo }: { todo: Todo }) => {
     onMutate: async ({ id, completed, name }) => {
       await apiUtils.todo.getAll.cancel()
       const allTodos = apiUtils.todo.getAll.getData() ?? []
+      if (!allTodos) return
+
       const newTodos = allTodos.map((todo) =>
-        todo.id === id ? { ...todo, completed, name } : todo
+        todo.id === id
+          ? {
+              ...todo,
+              completed: completed ?? todo.completed,
+              name: name ?? todo.name,
+            }
+          : todo
       )
-      apiUtils.todo.getAll.setData(undefined, newTodos as Todo[])
-      toast.success("Todo updated.")
+      apiUtils.todo.getAll.setData(undefined, newTodos)
+
+      toast.success(`Todo ${completed ? "completed" : "updated"}.`)
     },
     onError: (error) => {
       toast.error(error.message)
@@ -207,9 +188,10 @@ const TodoCard = ({ todo }: { todo: Todo }) => {
     onMutate: async (id) => {
       await apiUtils.todo.getAll.cancel()
       const allTodos = apiUtils.todo.getAll.getData() ?? []
+      if (!allTodos) return
       const newTodos = allTodos.filter((todo) => todo.id !== id)
       apiUtils.todo.getAll.setData(undefined, newTodos)
-      toast.success("Todo deleted!")
+      toast.success("Todo deleted.")
     },
     onError: (error) => {
       toast.error(error.message)
@@ -238,7 +220,6 @@ const TodoCard = ({ todo }: { todo: Todo }) => {
                 if (e.key === "Enter" && todoName?.length > 0) {
                   updateTodoMutation.mutate({
                     id: todo.id,
-                    completed: todo.completed,
                     name: todo.name,
                   })
                   setIsEditing(false)
@@ -280,30 +261,30 @@ const TodoCard = ({ todo }: { todo: Todo }) => {
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Checkbox
               id="todoStatus"
               checked={todo.completed}
               onCheckedChange={(checked) => {
-                if (typeof checked !== "boolean") return
                 updateTodoMutation.mutate({
                   id: todo.id,
-                  completed: checked,
+                  completed: !!checked,
                 })
               }}
             />
-            <p
+            <label
+              htmlFor="todoStatus"
               className={cn(
                 "line-clamp-1 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
                 todo.completed && "text-slate-400 line-through"
               )}
             >
               {todoName}
-            </p>
+            </label>
           </div>
         )}
         {isHoverd && !isEditing && (
-          <div className="flex items-center gap-2">
+          <div className="z-10 flex items-center gap-2">
             <Button
               type="button"
               title="Edit todo"

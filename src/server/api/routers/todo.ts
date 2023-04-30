@@ -5,7 +5,12 @@ import { z } from "zod"
 export const todoRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.prisma.todo.findMany({
-      orderBy: { createdAt: "asc" },
+      where: { userId: ctx.session.user.id },
+      select: {
+        id: true,
+        name: true,
+        completed: true,
+      },
     })
   }),
 
@@ -29,34 +34,45 @@ export const todoRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
+        name: z.string().min(1).optional(),
         completed: z.boolean().optional(),
-        name: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const uniqueTodo = await ctx.prisma.todo.findUnique({
+      const todo = await ctx.prisma.todo.findUnique({
         where: { id: input.id },
       })
-      if (!uniqueTodo) {
+      if (!todo) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Todo not found.",
         })
       }
-      const todo = await ctx.prisma.todo.update({
+
+      const updatedTodo = await ctx.prisma.todo.update({
         where: { id: input.id },
-        data: { completed: input.completed, name: input.name },
+        data: {
+          name: input.name,
+          completed: input.completed,
+        },
       })
-      return todo
+
+      if (updatedTodo.completed) {
+        await ctx.prisma.todo.delete({
+          where: { id: input.id },
+        })
+      }
+
+      return updatedTodo
     }),
 
   delete: protectedProcedure
     .input(z.string())
     .mutation(async ({ ctx, input }) => {
-      const uniqueTodo = await ctx.prisma.todo.findUnique({
+      const todo = await ctx.prisma.todo.findUnique({
         where: { id: input },
       })
-      if (!uniqueTodo) {
+      if (!todo) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Todo not found.",
@@ -66,10 +82,4 @@ export const todoRouter = createTRPCRouter({
         where: { id: input },
       })
     }),
-
-  deleteMany: protectedProcedure.mutation(async ({ ctx }) => {
-    return await ctx.prisma.todo.deleteMany({
-      where: { completed: true },
-    })
-  }),
 })
