@@ -14,6 +14,7 @@ const schema = z.object({
   longBreak: z.string(),
 })
 type Inputs = z.infer<typeof schema>
+
 export function Pomodoro() {
   // react-hook-form
   const { register, handleSubmit, formState, control } = useForm<Inputs>({

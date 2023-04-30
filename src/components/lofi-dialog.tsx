@@ -54,7 +54,7 @@ export function LofiDialog() {
           ))}
         </div>
       </DialogTrigger>
-      <DialogContent className="top-10 p-0">
+      <DialogContent className="top-20 p-0">
         <LofiTabs defaultTab={defaultTab} tabs={tabs} />
         {/* <DialogHeader>
           <DialogTitle>Edit profile</DialogTitle>

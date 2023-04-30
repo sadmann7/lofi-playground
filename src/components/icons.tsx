@@ -23,11 +23,13 @@ import {
   TreePine,
   Twitter,
   User,
+  Volume2,
+  VolumeX,
   Waves,
   Wind,
   X,
   type Icon as LucideIcon,
-  type LucideProps,
+  type LucideProps
 } from "lucide-react"
 
 export type Icon = LucideIcon
@@ -52,6 +54,8 @@ export const Icons = {
   dashboard: Gauge,
   settings: Settings,
   logout: LogOut,
+  volumne: Volume2,
+  volumneMute: VolumeX,
   rain: CloudRain,
   wind: Wind,
   snow: Snowflake,

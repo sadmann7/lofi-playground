@@ -91,7 +91,7 @@ export function TodoList() {
         todosQuery.data?.length > 0 && (
           <ul
             ref={todosRef}
-            className="grid max-h-[480px] gap-4 overflow-y-auto overflow-x-hidden px-6 pt-1"
+            className="grid max-h-[420px] gap-4 overflow-y-auto overflow-x-hidden px-6 pt-1"
           >
             {todosQuery.data.map((todo) => (
               <TodoCard todo={todo} key={todo.id} />
@@ -289,7 +289,7 @@ const TodoCard = ({ todo }: TodoCardProps) => {
               type="button"
               title="Edit todo"
               variant="ghost"
-              className="p-0 hover:bg-transparent"
+              className="h-auto p-1"
               onClick={() => setIsEditing(true)}
             >
               <Icons.edit className="h-4 w-4" aria-hidden="true" />
@@ -299,7 +299,7 @@ const TodoCard = ({ todo }: TodoCardProps) => {
               type="button"
               title="Delete todo"
               variant="ghost"
-              className="p-0 hover:bg-transparent"
+              className="h-auto p-1"
               onClick={() => deleteTodoMutation.mutate(todo.id)}
             >
               <Icons.trash className="h-4 w-4" aria-hidden="true" />
